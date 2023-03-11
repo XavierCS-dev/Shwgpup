@@ -1,4 +1,4 @@
-use shmup_wgpu_rs::run;
+use shmup_wgpu_rs::main_loop;
 fn main() {
-    pollster::block_on(run());
+    main_loop();
 }
