@@ -70,11 +70,11 @@ impl Sprite {
         let normal_height = Sprite::normalise(height as f32, window_height as f32, 0.0);
         [
             Vertex {
-                position: [normal_width * 0.5, normal_height *0.5,0.0],
+                position: [normal_width, normal_height,0.0],
                 tex_coords: [1.0,0.0],
             },
             Vertex {
-                position: [0.0, normal_height *0.5, 0.0],
+                position: [0.0, normal_height, 0.0],
                 tex_coords: [0.0, 0.0],
             },
             Vertex {
@@ -82,7 +82,7 @@ impl Sprite {
                 tex_coords: [0.0, 1.0],
             },
             Vertex {
-                position: [normal_width * 0.5, 0.0, 0.0],
+                position: [normal_width, 0.0, 0.0],
                 tex_coords: [1.0, 1.0],
             },
 
