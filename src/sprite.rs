@@ -1,5 +1,6 @@
 use crate::texture;
 use crate::vertex::Vertex;
+use wgpu::util::DeviceExt;
 
 // contains texture and texture bind group used for drawing
 // vertices are just a rectangle to fit an image
@@ -8,6 +9,8 @@ pub struct Sprite {
     pub diffuse_texture: texture::Texture,
     pub diffuse_bind_group: wgpu::BindGroup,
     pub vertices: [Vertex; 4],
+    pub vertex_buffer: wgpu::Buffer,
+    pub index_buffer: wgpu::Buffer,
     pub indices: [u16; 6],
 }
 
@@ -17,6 +20,7 @@ impl Sprite {
         texture_bind_group_layout: &wgpu::BindGroupLayout,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
+        size: &winit::dpi::PhysicalSize<u32>,
     ) -> Self {
         let image_file = image::open(filepath).unwrap();
         let diffuse_texture =
@@ -35,12 +39,25 @@ impl Sprite {
             ],
             label: Some("diffuse_bind_group"),
         });
-        let vertices = Sprite::create_vetices(image_file.width(), image_file.height())
+        let vertices = Sprite::create_vetices(image_file.width(), image_file.height(), size.width, size.height);
         let indices = [0, 1, 2, 0, 2, 3];
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(&vertices),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(&indices),
+            usage: wgpu::BufferUsages::INDEX,
+        });
         Sprite {
             diffuse_texture,
             diffuse_bind_group,
             vertices,
+            vertex_buffer,
+            index_buffer,
             indices,
         }
     }
@@ -49,22 +66,24 @@ impl Sprite {
         // normalise pixel dimensions of images to maintain aspect ratio and fit on the screen
         // which has range 0-1.
         // look to scale normalised size in the future..for now I will stick with a fixed resolution.
+        let normal_width = Sprite::normalise(width as f32, window_width as f32, 0.0);
+        let normal_height = Sprite::normalise(height as f32, window_height as f32, 0.0);
         [
             Vertex {
-                position: [],
-                tex_coords: [],
+                position: [normal_width * 0.5, normal_height *0.5,0.0],
+                tex_coords: [1.0,0.0],
             },
             Vertex {
-                position: [],
-                tex_coords: [],
+                position: [0.0, normal_height *0.5, 0.0],
+                tex_coords: [0.0, 0.0],
             },
             Vertex {
-                position: [],
-                tex_coords: [],
+                position: [0.0, 0.0, 0.0],
+                tex_coords: [0.0, 1.0],
             },
             Vertex {
-                position: [],
-                tex_coords: [],
+                position: [normal_width * 0.5, 0.0, 0.0],
+                tex_coords: [1.0, 1.0],
             },
 
         ]

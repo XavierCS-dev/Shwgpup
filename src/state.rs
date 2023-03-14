@@ -5,30 +5,7 @@ use wgpu::util::DeviceExt;
 use cgmath::prelude::*;
 use winit::event::WindowEvent;
 use crate::sprite::Sprite;
-
-pub const VERTICES: &[Vertex] = &[
-    // Changed
-    Vertex {
-        position: [-0.0868241, 0.49240386, 0.0],
-        tex_coords: [0.4131759, 0.00759614],
-    }, // A
-    Vertex {
-        position: [-0.49513406, 0.06958647, 0.0],
-        tex_coords: [0.0048659444, 0.43041354],
-    }, // B
-    Vertex {
-        position: [-0.21918549, -0.44939706, 0.0],
-        tex_coords: [0.28081453, 0.949397],
-    }, // C
-    Vertex {
-        position: [0.35966998, -0.3473291, 0.0],
-        tex_coords: [0.85967, 0.84732914],
-    }, // D
-    Vertex {
-        position: [0.44147372, 0.2347359, 0.0],
-        tex_coords: [0.9414737, 0.2652641],
-    }, // E
-];
+use crate::entity::Entity;
 
 pub struct State {
     pub surface: wgpu::Surface,
@@ -37,19 +14,25 @@ pub struct State {
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
     pub render_pipeline: wgpu::RenderPipeline,
-    pub vertex_buffer: wgpu::Buffer,
-    pub num_indices: u32,
+    pub entities: Vec<Entity>,
     pub window: Window,
-    pub index_buffer: wgpu::Buffer,
-    pub sprite: Sprite,
 }
 
-pub const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
 impl State {
     // Creating some of the wgpu types requires async code
     pub async fn new(window: Window) -> Self {
+        // locking the window size to prevent scaling issues with sprites
+        // can fix this if window is resized, but this is costly,
+        // game will be too large on high res screens, too small on low res
+        // screens, will need to work out a nice aspect ratio, then apply
+        // scaling where appropriate.
+        window.set_inner_size(winit::dpi::PhysicalSize {
+            width: 1124,
+            height: 2042,
+        });
         let size = window.inner_size();
+        // println!("size: {:?}", window.inner_size());
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -127,7 +110,9 @@ impl State {
                 label: Some("texture_bind_group_layout"),
             });
 
-        let sprite = Sprite::new("happy-tree.png", &texture_bind_group_layout, &device, &queue);
+        let sprite = Sprite::new("calamitas-clone.png", &texture_bind_group_layout, &device, &queue, &size);
+        let entity = Entity::new(sprite, 0.0, 0.0, 0.0, 0.0);
+        let entities = vec![entity];
 
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
         let render_pipeline_layout =
@@ -180,19 +165,6 @@ impl State {
             // indicates how many array layers the attachments will have.
             multiview: None,
         });
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-        let num_indices = INDICES.len() as u32;
-
         // ...
         Self {
             window,
@@ -202,10 +174,7 @@ impl State {
             config,
             size,
             render_pipeline,
-            vertex_buffer,
-            num_indices,
-            index_buffer,
-            sprite,
+            entities,
         }
     }
 
@@ -214,12 +183,14 @@ impl State {
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+        /*
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
         }
+        */
     }
 
     pub fn input(&mut self, event: &WindowEvent) -> bool {
@@ -256,11 +227,18 @@ impl State {
                 })],
                 depth_stencil_attachment: None,
             });
-            render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.sprite.diffuse_bind_group, &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+            // implement instancing...try and fixc the life time issue when using values in a render function
+            for entity in &self.entities {
+                render_pass.set_pipeline(&self.render_pipeline);
+                render_pass.set_bind_group(0, &entity.sprite.diffuse_bind_group, &[]);
+                render_pass.set_vertex_buffer(0, entity.sprite.vertex_buffer.slice(..));
+                render_pass.set_index_buffer(
+                    entity.sprite.index_buffer.slice(..),
+                    wgpu::IndexFormat::Uint16,
+                );
+                // println!("size: {:?}", self.window.inner_size());
+                render_pass.draw_indexed(0..6, 0, 0..1);
+            }
         }
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
