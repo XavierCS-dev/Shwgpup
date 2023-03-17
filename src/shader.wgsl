@@ -32,15 +32,13 @@ fn vs_main(
     var screen_width = 562.0;
     var screen_height = 1021.0;
     var out: VertexOutput;
-    var orig_x: f32 = model.position.x - entity.origin.x;
-    var orig_y: f32 = model.position.y - entity.origin.y;
+    var orig_x: f32 = (model.position.x - entity.origin.x);
+    var orig_y: f32 = (model.position.y - entity.origin.y);
     var new_x = (orig_x * cos(entity.rotation)) - (orig_y * sin(entity.rotation));
     var new_y = (orig_y * cos(entity.rotation)) + (orig_x * sin(entity.rotation));
     var final_x = new_x + entity.origin.x;
     var final_y = new_y + entity.origin.y;
     var final_vec = (vec4<f32>(final_x, final_y, 0.0, 0.0) + vec4<f32>(entity.position, 0.0, 0.0));
-    final_vec.x = final_vec.x * entity.scale;
-    final_vec.y = final_vec.y * entity.scale;
     final_vec = vec4<f32>(normalise(vec2<f32>(final_vec.x, final_vec.y), screen_width, screen_height), 1.0, 1.0);
     out.tex_coords = model.tex_coords;
     out.clip_position = final_vec;

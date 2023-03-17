@@ -118,7 +118,7 @@ impl State {
             &device,
             &queue,
         );
-        let entity = Entity::new(sprite, 300, 700, 45.0, 0.35);
+        let entity = Entity::new(sprite, 0, 0, 45.0, 0.35);
         let entities = vec![entity];
         let entity_data = entities.iter().map(Entity::to_raw).collect::<Vec<_>>();
         let entity_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -213,7 +213,7 @@ impl State {
 
     pub fn update(&mut self) {
         for entity in &mut self.entities {
-            entity.update(300, 700, 0.1, 0.15);
+            entity.update(0, 0, 0.1, 0.20);
             println!("{}", entity.rotation);
         }
         let entity_data = self.entities.iter().map(Entity::to_raw).collect::<Vec<_>>();

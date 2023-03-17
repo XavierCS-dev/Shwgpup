@@ -95,12 +95,4 @@ impl Sprite {
             ],
         )
     }
-
-    fn normalise(given: f32, max: f32, min: f32) -> f32 {
-        (given - min) / (max - min)
-    }
-
-    pub fn diffuse_bind_group(&self) -> &wgpu::BindGroup {
-        &self.diffuse_bind_group
-    }
 }
