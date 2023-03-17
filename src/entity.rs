@@ -23,7 +23,9 @@ pub struct Entity {
 }
 
 impl Entity {
-    pub fn new(sprite: Sprite, x: f32, y: f32, rotation: f32, scale: f32) -> Entity {
+    pub fn new(sprite: Sprite, x: u32, y: u32, rotation: f32, scale: f32) -> Entity {
+        let x = x as f32;
+        let y = y as f32;
         let position = Vector2 { x, y };
         Entity {
             sprite,
@@ -35,7 +37,9 @@ impl Entity {
 
     // update function to be called for entities, more complicated structures such as players or enemies will call this
     // on their entities to update their position, I will also possibly implement scaling.
-    pub fn update(&mut self, x: f32, y: f32, rotation: f32, scale: f32) {
+    pub fn update(&mut self, x: u32, y: u32, rotation: f32, scale: f32) {
+        let x = x as f32;
+        let y = y as f32;
         self.position.x = x;
         self.position.y = y;
         self.rotation = self.rotation + rotation;

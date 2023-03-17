@@ -22,7 +22,6 @@ impl Sprite {
         texture_bind_group_layout: &wgpu::BindGroupLayout,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        size: &winit::dpi::PhysicalSize<u32>,
     ) -> Self {
         let image_file = image::open(filepath).unwrap();
         let diffuse_texture =
@@ -41,12 +40,7 @@ impl Sprite {
             ],
             label: Some("diffuse_bind_group"),
         });
-        let (origin, vertices) = Sprite::create_vetices(
-            image_file.width(),
-            image_file.height(),
-            size.width,
-            size.height,
-        );
+        let (origin, vertices) = Sprite::create_vetices(image_file.width(), image_file.height());
         let indices = [0, 1, 2, 0, 2, 3];
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
@@ -70,29 +64,24 @@ impl Sprite {
         }
     }
 
-    fn create_vetices(
-        width: u32,
-        height: u32,
-        window_width: u32,
-        window_height: u32,
-    ) -> (Vector2<f32>, [Vertex; 4]) {
+    fn create_vetices(width: u32, height: u32) -> (Vector2<f32>, [Vertex; 4]) {
         // normalise pixel dimensions of images to maintain aspect ratio and fit on the screen
         // which has range 0-1.
         // look to scale normalised size in the future..for now I will stick with a fixed resolution.
-        let normal_width = Sprite::normalise(width as f32, window_width as f32, 0.0);
-        let normal_height = Sprite::normalise(height as f32, window_height as f32, 0.0);
+        let width = width as f32;
+        let height = height as f32;
         (
             Vector2 {
-                x: normal_width / 2.0,
-                y: normal_height / 2.0,
+                x: width / 2.0,
+                y: height / 2.0,
             },
             [
                 Vertex {
-                    position: [normal_width, normal_height, 0.0],
+                    position: [width, height, 0.0],
                     tex_coords: [1.0, 0.0],
                 },
                 Vertex {
-                    position: [0.0, normal_height, 0.0],
+                    position: [0.0, height, 0.0],
                     tex_coords: [0.0, 0.0],
                 },
                 Vertex {
@@ -100,7 +89,7 @@ impl Sprite {
                     tex_coords: [0.0, 1.0],
                 },
                 Vertex {
-                    position: [normal_width, 0.0, 0.0],
+                    position: [width, 0.0, 0.0],
                     tex_coords: [1.0, 1.0],
                 },
             ],
