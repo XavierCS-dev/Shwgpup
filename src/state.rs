@@ -1,11 +1,12 @@
-use winit::window::Window;
+use crate::entity::Entity;
+use crate::sprite::Sprite;
 use crate::texture;
 use crate::vertex::Vertex;
-use wgpu::util::DeviceExt;
 use cgmath::prelude::*;
+use wgpu::util::DeviceExt;
 use winit::event::WindowEvent;
-use crate::sprite::Sprite;
-use crate::entity::Entity;
+use winit::window::Window;
+use crate::entity::EntityRaw;
 
 pub struct State {
     pub surface: wgpu::Surface,
@@ -15,9 +16,9 @@ pub struct State {
     pub size: winit::dpi::PhysicalSize<u32>,
     pub render_pipeline: wgpu::RenderPipeline,
     pub entities: Vec<Entity>,
+    pub entity_buffer: wgpu::Buffer,
     pub window: Window,
 }
-
 
 impl State {
     // Creating some of the wgpu types requires async code
@@ -110,9 +111,21 @@ impl State {
                 label: Some("texture_bind_group_layout"),
             });
 
-        let sprite = Sprite::new("calamitas-clone.png", &texture_bind_group_layout, &device, &queue, &size);
-        let entity = Entity::new(sprite, 0.0, 0.0, 0.0, 0.0);
+        let sprite = Sprite::new(
+            "calamitas-clone.png",
+            &texture_bind_group_layout,
+            &device,
+            &queue,
+            &size,
+        );
+        let entity = Entity::new(sprite, -0.6, 0.4, 45.0, 0.5);
         let entities = vec![entity];
+        let entity_data = entities.iter().map(Entity::to_raw).collect::<Vec<_>>();
+        let entity_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Instance Buffer"),
+            contents: bytemuck::cast_slice(&entity_data),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
 
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
         let render_pipeline_layout =
@@ -128,7 +141,7 @@ impl State {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Vertex::desc()],
+                buffers: &[Vertex::desc(), EntityRaw::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -175,6 +188,7 @@ impl State {
             size,
             render_pipeline,
             entities,
+            entity_buffer,
         }
     }
 
@@ -232,12 +246,13 @@ impl State {
                 render_pass.set_pipeline(&self.render_pipeline);
                 render_pass.set_bind_group(0, &entity.sprite.diffuse_bind_group, &[]);
                 render_pass.set_vertex_buffer(0, entity.sprite.vertex_buffer.slice(..));
+                render_pass.set_vertex_buffer(1, self.entity_buffer.slice(..));
                 render_pass.set_index_buffer(
                     entity.sprite.index_buffer.slice(..),
                     wgpu::IndexFormat::Uint16,
                 );
                 // println!("size: {:?}", self.window.inner_size());
-                render_pass.draw_indexed(0..6, 0, 0..1);
+                render_pass.draw_indexed(0..6, 0, 0..self.entities.len() as _);
             }
         }
         self.queue.submit(std::iter::once(encoder.finish()));

@@ -7,7 +7,10 @@ use cgmath::Vector2;
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct EntityRaw {
-    pub model: [[f32; 3]; 3],
+    pub position: [f32; 2],
+    pub origin: [f32; 2],
+    pub rotation: f32,
+    pub scale: f32,
 }
 
 // contain sprite, This struct is for rare entities, ie not sharing a sprite.
@@ -15,59 +18,83 @@ pub struct EntityRaw {
 pub struct Entity {
     pub sprite: Sprite,
     position: Vector2<f32>,
-    rotation: Basis2<f32>,
-    raw: EntityRaw,
+    rotation: f32,
+    scale: f32,
 }
 
 impl Entity {
-    pub fn new(sprite: Sprite, x: f32, y: f32, rotation_deg: f32, scale: f32) -> Entity {
-        let rotation = Basis2::from_angle(cgmath::Deg(rotation_deg).normalize());
-        let position = rotation.rotate_vector(Vector2 { x, y });
-        let init = cgmath::Matrix3::new(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
-        let raw = Entity::to_raw(
-            init,
-            cgmath::Matrix3::from_translation(position),
-            cgmath::Matrix3::from_scale(scale),
-        );
+    pub fn new(sprite: Sprite, x: f32, y: f32, rotation: f32, scale: f32) -> Entity {
+        let position = Vector2 { x, y };
         Entity {
             sprite,
             position,
             rotation,
-            raw,
+            scale,
         }
     }
 
     // update function to be called for entities, more complicated structures such as players or enemies will call this
     // on their entities to update their position, I will also possibly implement scaling.
     pub fn update(&mut self, x: f32, y: f32, rotation: f32, scale: f32) {
-        self.position.y += y;
-        self.position.x += x;
-        self.rotation = Basis2::from_angle(cgmath::Deg(rotation).normalize());
-        self.position = self.rotation.rotate_vector(self.position);
-        let temp = cgmath::Matrix3 {
-            x: self.raw.model[0].into(),
-            y: self.raw.model[1].into(),
-            z: self.raw.model[2].into(),
-        };
-        self.raw = Entity::to_raw(
-            temp,
-            cgmath::Matrix3::from_scale(scale),
-            cgmath::Matrix3::from_translation(self.position),
-        );
+        self.position.x = x;
+        self.position.y = y;
+        self.rotation = rotation;
+        self.scale = scale;
     }
 
     // needed for sending to the shaders (rotation and position)
-    pub fn to_raw(
-        original: cgmath::Matrix3<f32>,
-        movement: cgmath::Matrix3<f32>,
-        scale: cgmath::Matrix3<f32>,
-    ) -> EntityRaw {
+    pub fn to_raw(&self) -> EntityRaw {
         EntityRaw {
-            model: (original * movement * scale).into(),
+            position: self.position.into(),
+            origin: self.sprite.origin.into(),
+            // convert degrees to radians
+            rotation: (self.rotation * 3.14159265) / 180.0,
+            scale: self.scale,
         }
     }
 
-    pub fn render<'a, 'b>(&self, render_pass: &mut wgpu::RenderPass<'b>, pipeline: &wgpu::RenderPipeline) {
+    pub fn render<'a, 'b>(
+        &self,
+        render_pass: &mut wgpu::RenderPass<'b>,
+        pipeline: &wgpu::RenderPipeline,
+    ) {
         //
+    }
+}
+
+
+impl EntityRaw {
+    pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+        use std::mem;
+        wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<EntityRaw>() as wgpu::BufferAddress,
+            // We need to switch from using a step mode of Vertex to Instance
+            // This means that our shaders will only change to use the next
+            // instance when the shader starts processing a new instance
+            step_mode: wgpu::VertexStepMode::Instance,
+            attributes: &[
+                wgpu::VertexAttribute {
+                    offset: 0,
+                    shader_location: 5,
+                    format: wgpu::VertexFormat::Float32x2,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
+                    shader_location: 6,
+                    format: wgpu::VertexFormat::Float32x2,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
+                    shader_location: 7,
+                    format: wgpu::VertexFormat::Float32,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 5]>() as wgpu::BufferAddress,
+                    shader_location: 8,
+                    format: wgpu::VertexFormat::Float32,
+                },
+
+            ],
+        }
     }
 }
