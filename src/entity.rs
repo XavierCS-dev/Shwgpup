@@ -18,7 +18,7 @@ pub struct EntityRaw {
 pub struct Entity {
     pub sprite: Sprite,
     position: Vector2<f32>,
-    rotation: f32,
+    pub rotation: f32,
     scale: f32,
 }
 
@@ -38,7 +38,7 @@ impl Entity {
     pub fn update(&mut self, x: f32, y: f32, rotation: f32, scale: f32) {
         self.position.x = x;
         self.position.y = y;
-        self.rotation = rotation;
+        self.rotation = self.rotation + rotation;
         self.scale = scale;
     }
 
@@ -61,7 +61,6 @@ impl Entity {
         //
     }
 }
-
 
 impl EntityRaw {
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
@@ -93,7 +92,6 @@ impl EntityRaw {
                     shader_location: 8,
                     format: wgpu::VertexFormat::Float32,
                 },
-
             ],
         }
     }

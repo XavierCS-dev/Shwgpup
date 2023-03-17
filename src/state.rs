@@ -119,7 +119,7 @@ impl State {
             &queue,
             &size,
         );
-        let entity = Entity::new(sprite, -0.6, 0.4, 0.0, 0.35);
+        let entity = Entity::new(sprite, -0.6, 0.4, 45.0, 0.35);
         let entities = vec![entity];
         let entity_data = entities.iter().map(Entity::to_raw).collect::<Vec<_>>();
         let entity_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -212,7 +212,24 @@ impl State {
         false
     }
 
-    pub fn update(&mut self) {}
+    pub fn update(&mut self) {
+        for entity in &mut self.entities {
+            entity.update(0.0, 0.0, 0.1, 0.35);
+            println!("{}", entity.rotation);
+            if (entity.rotation % 180.0) < 1.0 {
+                std::thread::sleep(std::time::Duration::from_millis(500));
+            }
+        }
+        let entity_data = self.entities.iter().map(Entity::to_raw).collect::<Vec<_>>();
+        let entity_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(&entity_data),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+        self.entity_buffer = entity_buffer;
+    }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
