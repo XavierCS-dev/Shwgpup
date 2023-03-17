@@ -1,4 +1,5 @@
 use crate::entity::Entity;
+use crate::entity::EntityRaw;
 use crate::sprite::Sprite;
 use crate::texture;
 use crate::vertex::Vertex;
@@ -6,7 +7,6 @@ use cgmath::prelude::*;
 use wgpu::util::DeviceExt;
 use winit::event::WindowEvent;
 use winit::window::Window;
-use crate::entity::EntityRaw;
 
 pub struct State {
     pub surface: wgpu::Surface,
@@ -29,9 +29,10 @@ impl State {
         // screens, will need to work out a nice aspect ratio, then apply
         // scaling where appropriate.
         window.set_inner_size(winit::dpi::PhysicalSize {
-            width: 1124,
-            height: 2042,
+            width: 562,
+            height: 1021,
         });
+        window.set_resizable(false);
         let size = window.inner_size();
         // println!("size: {:?}", window.inner_size());
 
@@ -118,7 +119,7 @@ impl State {
             &queue,
             &size,
         );
-        let entity = Entity::new(sprite, -0.6, 0.4, 45.0, 0.5);
+        let entity = Entity::new(sprite, -0.6, 0.4, 0.0, 0.35);
         let entities = vec![entity];
         let entity_data = entities.iter().map(Entity::to_raw).collect::<Vec<_>>();
         let entity_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
