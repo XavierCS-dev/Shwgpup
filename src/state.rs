@@ -113,7 +113,7 @@ impl State {
             });
 
         let sprite = Sprite::new(
-            "calamitas-clone.png",
+            "assets/spoon.png",
             &texture_bind_group_layout,
             &device,
             &queue,
