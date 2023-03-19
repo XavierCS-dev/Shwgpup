@@ -214,7 +214,7 @@ impl State {
     }
 
     pub fn update(&mut self) {
-        unsafe { rotation += 0.001 };
+        unsafe { rotation += 0.05 };
         for entity in &mut self.entities {
             entity.update(562 / 2, 1021 / 2, unsafe { rotation }, 0.5);
         }

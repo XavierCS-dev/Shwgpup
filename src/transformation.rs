@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Transformation {
@@ -7,6 +9,7 @@ pub struct Transformation {
 
 impl Transformation {
     pub fn new(rotation: f32, scale: f32) -> Transformation {
+        let rotation = (rotation * PI) / 180.0;
         let rotation = [
             [rotation.cos(), rotation.sin()],
             [-(rotation.sin()), rotation.cos()],

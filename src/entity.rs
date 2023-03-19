@@ -4,7 +4,6 @@ use cgmath::prelude::*;
 use cgmath::Basis2;
 use cgmath::Vector2;
 
-// wgsl compatible rotation and position matrix
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct EntityRaw {
@@ -16,6 +15,7 @@ pub struct EntityRaw {
 
 // contain sprite, This struct is for rare entities, ie not sharing a sprite.
 // a shared entity with support for instancing will be created in that case.
+// move position into transformation struct
 pub struct Entity {
     pub sprite: Sprite,
     position: Vector2<f32>,
