@@ -1,4 +1,5 @@
 use crate::sprite::Sprite;
+use crate::transformation::Transformation;
 use cgmath::prelude::*;
 use cgmath::Basis2;
 use cgmath::Vector2;
@@ -9,8 +10,8 @@ use cgmath::Vector2;
 pub struct EntityRaw {
     pub position: [f32; 2],
     pub origin: [f32; 2],
-    pub rotation: f32,
-    pub scale: f32,
+    pub rotation: [[f32; 2]; 2],
+    pub scale: [[f32; 2]; 2],
 }
 
 // contain sprite, This struct is for rare entities, ie not sharing a sprite.
@@ -18,8 +19,7 @@ pub struct EntityRaw {
 pub struct Entity {
     pub sprite: Sprite,
     position: Vector2<f32>,
-    pub rotation: f32,
-    scale: f32,
+    pub transformation: Transformation,
 }
 
 impl Entity {
@@ -27,11 +27,11 @@ impl Entity {
         let x = x as f32;
         let y = y as f32;
         let position = Vector2 { x, y };
+        let transformation = Transformation::new(rotation, scale);
         Entity {
             sprite,
             position,
-            rotation,
-            scale,
+            transformation,
         }
     }
 
@@ -42,8 +42,7 @@ impl Entity {
         let y = y as f32;
         self.position.x = x;
         self.position.y = y;
-        self.rotation = self.rotation + rotation;
-        self.scale = scale;
+        self.transformation = Transformation::new(rotation, scale);
     }
 
     // needed for sending to the shaders (rotation and position)
@@ -52,8 +51,8 @@ impl Entity {
             position: self.position.into(),
             origin: self.sprite.origin.into(),
             // convert degrees to radians
-            rotation: (self.rotation * 3.14159265) / 180.0,
-            scale: self.scale,
+            rotation: self.transformation.rotation(),
+            scale: self.transformation.scale(),
         }
     }
 
@@ -89,12 +88,22 @@ impl EntityRaw {
                 wgpu::VertexAttribute {
                     offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
                     shader_location: 7,
-                    format: wgpu::VertexFormat::Float32,
+                    format: wgpu::VertexFormat::Float32x2,
                 },
                 wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 5]>() as wgpu::BufferAddress,
+                    offset: mem::size_of::<[f32; 6]>() as wgpu::BufferAddress,
                     shader_location: 8,
-                    format: wgpu::VertexFormat::Float32,
+                    format: wgpu::VertexFormat::Float32x2,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 8]>() as wgpu::BufferAddress,
+                    shader_location: 9,
+                    format: wgpu::VertexFormat::Float32x2,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 10]>() as wgpu::BufferAddress,
+                    shader_location: 10,
+                    format: wgpu::VertexFormat::Float32x2,
                 },
             ],
         }

@@ -20,6 +20,8 @@ pub struct State {
     pub window: Window,
 }
 
+static mut rotation: f32 = 0.0;
+
 impl State {
     // Creating some of the wgpu types requires async code
     pub async fn new(window: Window) -> Self {
@@ -212,9 +214,9 @@ impl State {
     }
 
     pub fn update(&mut self) {
+        unsafe { rotation += 0.001 };
         for entity in &mut self.entities {
-            entity.update(0, 0, 0.1, 0.20);
-            println!("{}", entity.rotation);
+            entity.update(562 / 2, 1021 / 2, unsafe { rotation }, 0.5);
         }
         let entity_data = self.entities.iter().map(Entity::to_raw).collect::<Vec<_>>();
         let entity_buffer = self

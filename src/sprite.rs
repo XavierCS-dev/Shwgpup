@@ -70,26 +70,28 @@ impl Sprite {
         // look to scale normalised size in the future..for now I will stick with a fixed resolution.
         let width = width as f32;
         let height = height as f32;
+        let h_width = width / 2.0;
+        let h_height = height / 2.0;
         (
             Vector2 {
-                x: width / 2.0,
-                y: height / 2.0,
+                x: (width / 2.0) - h_width,
+                y: (height / 2.0) - h_height,
             },
             [
                 Vertex {
-                    position: [width, height, 0.0],
+                    position: [width - h_width, height - h_height, 0.0],
                     tex_coords: [1.0, 0.0],
                 },
                 Vertex {
-                    position: [0.0, height, 0.0],
+                    position: [0.0 - h_width, height - h_height, 0.0],
                     tex_coords: [0.0, 0.0],
                 },
                 Vertex {
-                    position: [0.0, 0.0, 0.0],
+                    position: [0.0 - h_width, 0.0 - h_height, 0.0],
                     tex_coords: [0.0, 1.0],
                 },
                 Vertex {
-                    position: [width, 0.0, 0.0],
+                    position: [width - h_width, 0.0 - h_height, 0.0],
                     tex_coords: [1.0, 1.0],
                 },
             ],

@@ -11,8 +11,10 @@ struct VertexOutput {
 struct EntityInput {
     @location(5) position: vec2<f32>,
     @location(6) origin: vec2<f32>,
-    @location(7) rotation: f32,
-    @location(8) scale: f32,
+    @location(7) rotation_1: vec2<f32>,
+    @location(8) rotation_2: vec2<f32>,
+    @location(9) scale_1: vec2<f32>,
+    @location(10) scale_2: vec2<f32>,
 }
 
 struct Dimensions {
@@ -32,16 +34,23 @@ fn vs_main(
     var screen_width = 562.0;
     var screen_height = 1021.0;
     var out: VertexOutput;
-    var orig_x: f32 = (model.position.x - entity.origin.x);
-    var orig_y: f32 = (model.position.y - entity.origin.y);
-    var new_x = (orig_x * cos(entity.rotation)) - (orig_y * sin(entity.rotation));
-    var new_y = (orig_y * cos(entity.rotation)) + (orig_x * sin(entity.rotation));
-    var final_x = new_x + entity.origin.x;
-    var final_y = new_y + entity.origin.y;
-    var final_vec = (vec4<f32>(final_x, final_y, 0.0, 0.0) + vec4<f32>(entity.position, 0.0, 0.0));
-    final_vec = vec4<f32>(normalise(vec2<f32>(final_vec.x, final_vec.y), screen_width, screen_height), 1.0, 1.0);
+    var rot_mat = mat2x2<f32>(
+        entity.rotation_1,
+        entity.rotation_2,
+    );
+    var scale_mat = mat2x2<f32>(
+        entity.scale_1,
+        entity.scale_2,
+    );
+    var orig_x = model.position.x- entity.origin.x;
+    var orig_y = model.position.y - entity.origin.y;
+    var orig_vec = vec2<f32>(orig_x, orig_y);
+    orig_vec = orig_vec * rot_mat * scale_mat;
+    orig_vec = orig_vec + entity.position;
+    orig_vec = orig_vec + entity.origin;
+    orig_vec = normalise(orig_vec, screen_width, screen_height);
     out.tex_coords = model.tex_coords;
-    out.clip_position = final_vec;
+    out.clip_position = vec4<f32>(orig_vec, 1.0, 1.0);
     return out;
 }
 
