@@ -1,5 +1,6 @@
 mod entity;
 mod process_window_event;
+mod render_init;
 mod run;
 mod sprite;
 mod state;

@@ -10,13 +10,9 @@ use winit::window::Window;
 
 pub struct State {
     pub surface: wgpu::Surface,
-    pub device: wgpu::Device,
-    pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
-    pub render_pipeline: wgpu::RenderPipeline,
     pub entities: Vec<Entity>,
-    pub entity_buffer: wgpu::Buffer,
     pub window: Window,
 }
 
@@ -89,108 +85,36 @@ impl State {
         };
         surface.configure(&device, &config);
 
-        let texture_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        // This should match the filterable field of the
-                        // corresponding Texture entry above.
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                ],
-                label: Some("texture_bind_group_layout"),
-            });
-
-        let sprite = Sprite::new(
+        let entity = Entity::new(
             "assets/spoon.png",
-            &texture_bind_group_layout,
-            &device,
-            &queue,
+            100,
+            100,
+            45.0,
+            0.35,
+            &surface,
+            &config,
+            &adapter,
         );
-        let entity = Entity::new(sprite, 0, 0, 45.0, 0.35);
-        let entities = vec![entity];
-        let entity_data = entities.iter().map(Entity::to_raw).collect::<Vec<_>>();
-        let entity_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Instance Buffer"),
-            contents: bytemuck::cast_slice(&entity_data),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&texture_bind_group_layout],
-                push_constant_ranges: &[],
-            });
-
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[Vertex::desc(), EntityRaw::desc()],
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent::REPLACE,
-                        alpha: wgpu::BlendComponent::REPLACE,
-                    }),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                // Setting this to anything other than Fill requires Features::POLYGON_MODE_LINE
-                // or Features::POLYGON_MODE_POINT
-                polygon_mode: wgpu::PolygonMode::Fill,
-                // Requires Features::DEPTH_CLIP_CONTROL
-                unclipped_depth: false,
-                // Requires Features::CONSERVATIVE_RASTERIZATION
-                conservative: false,
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            // If the pipeline will be used with a multiview render pass, this
-            // indicates how many array layers the attachments will have.
-            multiview: None,
-        });
+        let entities = vec![
+            entity,
+            Entity::new(
+                "assets/spoon.png",
+                200,
+                200,
+                90.0,
+                0.35,
+                &surface,
+                &config,
+                &adapter,
+            ),
+        ];
         // ...
         Self {
             window,
             surface,
-            device,
-            queue,
             config,
             size,
-            render_pipeline,
             entities,
-            entity_buffer,
         }
     }
 
@@ -214,64 +138,22 @@ impl State {
     }
 
     pub fn update(&mut self) {
-        unsafe { rotation += 0.05 };
+        unsafe { rotation += 0.2 };
         for entity in &mut self.entities {
-            entity.update(562 / 2, 1021 / 2, unsafe { rotation }, 0.5);
+            entity.update(
+                entity.position_x(),
+                entity.position_y(),
+                unsafe { rotation },
+                entity.scale(),
+            );
         }
-        let entity_data = self.entities.iter().map(Entity::to_raw).collect::<Vec<_>>();
-        let entity_buffer = self
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&entity_data),
-                usage: wgpu::BufferUsages::VERTEX,
-            });
-        self.entity_buffer = entity_buffer;
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 1.0,
-                        }),
-                        store: true,
-                    },
-                })],
-                depth_stencil_attachment: None,
-            });
-            // implement instancing...try and fixc the life time issue when using values in a render function
-            for entity in &self.entities {
-                render_pass.set_pipeline(&self.render_pipeline);
-                render_pass.set_bind_group(0, &entity.sprite.diffuse_bind_group, &[]);
-                render_pass.set_vertex_buffer(0, entity.sprite.vertex_buffer.slice(..));
-                render_pass.set_vertex_buffer(1, self.entity_buffer.slice(..));
-                render_pass.set_index_buffer(
-                    entity.sprite.index_buffer.slice(..),
-                    wgpu::IndexFormat::Uint16,
-                );
-                // println!("size: {:?}", self.window.inner_size());
-                render_pass.draw_indexed(0..6, 0, 0..self.entities.len() as _);
-            }
+        for entity in &self.entities {
+            entity.render(&output).unwrap();
         }
-        self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
         Ok(())
