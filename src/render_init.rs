@@ -4,36 +4,12 @@ use crate::{entity::EntityRaw, vertex::Vertex};
 
 // Boiler plate initalisation.
 pub struct RenderInit {
-    pub device: wgpu::Device,
-    pub queue: wgpu::Queue,
     pub render_pipeline: wgpu::RenderPipeline,
     pub texture_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl RenderInit {
-    pub async fn new(
-        surface: &Surface,
-        config: &SurfaceConfiguration,
-        adapter: &wgpu::Adapter,
-    ) -> Self {
-        let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    features: wgpu::Features::empty(),
-                    // WebGL doesn't support all of wgpu's features, so if
-                    // we're building for the web we'll have to disable some.
-                    limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
-                    } else {
-                        wgpu::Limits::default()
-                    },
-                    label: None,
-                },
-                None, // Trace path
-            )
-            .await
-            .unwrap();
-
+    pub async fn new(config: &SurfaceConfiguration, device: &wgpu::Device) -> Self {
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
@@ -116,8 +92,6 @@ impl RenderInit {
         });
         Self {
             texture_bind_group_layout,
-            device,
-            queue,
             render_pipeline,
         }
     }

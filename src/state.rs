@@ -14,6 +14,8 @@ pub struct State {
     pub size: winit::dpi::PhysicalSize<u32>,
     pub entities: Vec<Entity>,
     pub window: Window,
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
 }
 
 static mut rotation: f32 = 0.0;
@@ -84,30 +86,22 @@ impl State {
             view_formats: vec![],
         };
         surface.configure(&device, &config);
-
-        let entity = Entity::new(
-            "assets/spoon.png",
-            100,
-            100,
-            45.0,
-            0.35,
-            &surface,
-            &config,
-            &adapter,
-        );
-        let entities = vec![
-            entity,
-            Entity::new(
+        let mut entities: Vec<Entity> = Vec::new();
+        for i in 0..100 {
+            entities.push(Entity::new(
                 "assets/spoon.png",
-                200,
-                200,
-                90.0,
+                i,
+                i,
+                0.0,
                 0.35,
                 &surface,
                 &config,
                 &adapter,
-            ),
-        ];
+                &queue,
+                &device,
+            ));
+        }
+
         // ...
         Self {
             window,
@@ -115,6 +109,8 @@ impl State {
             config,
             size,
             entities,
+            device,
+            queue,
         }
     }
 
@@ -151,9 +147,18 @@ impl State {
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
+        let view = output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Render Encoder"),
+            });
         for entity in &self.entities {
-            entity.render(&output).unwrap();
+            entity.render(&self.device, &mut encoder, &view).unwrap();
         }
+        self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
         Ok(())

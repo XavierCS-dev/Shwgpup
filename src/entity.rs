@@ -10,6 +10,7 @@ use wgpu::Queue;
 use wgpu::Surface;
 use wgpu::SurfaceConfiguration;
 use wgpu::SurfaceTexture;
+use wgpu::TextureView;
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -27,8 +28,6 @@ pub struct Entity {
     sprite: Sprite,
     position: Vector2<f32>,
     transformation: Transformation,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
     render_pipeline: wgpu::RenderPipeline,
     rotation_deg: f32,
     ent_scale: f32,
@@ -44,6 +43,8 @@ impl Entity {
         surface: &Surface,
         config: &SurfaceConfiguration,
         adapter: &wgpu::Adapter,
+        queue: &wgpu::Queue,
+        device: &wgpu::Device,
     ) -> Entity {
         let rotation_deg = rotation;
         let x = x as f32;
@@ -51,9 +52,7 @@ impl Entity {
         let ent_scale = scale;
         let position = Vector2 { x, y };
         let transformation = Transformation::new(rotation, scale);
-        let render_init = pollster::block_on(RenderInit::new(surface, config, adapter));
-        let device = render_init.device;
-        let queue = render_init.queue;
+        let render_init = pollster::block_on(RenderInit::new(config, device));
         let render_pipeline = render_init.render_pipeline;
         let texture_bind_group_layout = render_init.texture_bind_group_layout;
         let sprite = Sprite::new(filepath, &texture_bind_group_layout, &device, &queue);
@@ -61,8 +60,6 @@ impl Entity {
             sprite,
             position,
             transformation,
-            device,
-            queue,
             render_pipeline,
             rotation_deg,
             ent_scale,
@@ -92,23 +89,18 @@ impl Entity {
         }
     }
 
-    pub fn render(&self, output: &SurfaceTexture) -> Result<(), wgpu::SurfaceError> {
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
+    pub fn render(
+        &self,
+        device: &wgpu::Device,
+        encoder: &mut wgpu::CommandEncoder,
+        view: &wgpu::TextureView,
+    ) -> Result<(), wgpu::SurfaceError> {
         let entity_data = vec![self.to_raw()];
-        let entity_buffer = self
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&entity_data),
-                usage: wgpu::BufferUsages::VERTEX,
-            });
+        let entity_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Instance Buffer"),
+            contents: bytemuck::cast_slice(&entity_data),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
@@ -116,7 +108,12 @@ impl Entity {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.1,
+                            g: 0.2,
+                            b: 0.3,
+                            a: 1.0,
+                        }),
                         store: true,
                     },
                 })],
@@ -134,7 +131,7 @@ impl Entity {
             // println!("size: {:?}", self.window.inner_size());
             render_pass.draw_indexed(0..6, 0, 0..1);
         }
-        self.queue.submit(std::iter::once(encoder.finish()));
+
         Ok(())
     }
 

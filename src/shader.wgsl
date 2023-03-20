@@ -42,9 +42,7 @@ fn vs_main(
         entity.scale_1,
         entity.scale_2,
     );
-    var orig_x = model.position.x- entity.origin.x;
-    var orig_y = model.position.y - entity.origin.y;
-    var orig_vec = vec2<f32>(orig_x, orig_y);
+    var orig_vec = vec2<f32>(model.position.x- entity.origin.x, model.position.y - entity.origin.y);
     orig_vec = orig_vec * rot_mat * scale_mat;
     orig_vec = orig_vec + entity.position;
     orig_vec = orig_vec + entity.origin;
@@ -57,10 +55,7 @@ fn vs_main(
 
 
 fn normalise(given: vec2<f32>, width: f32, height: f32) -> vec2<f32> {
-    var new_vec: vec2<f32>;
-    new_vec.x = ((2.0 * (given.x)) / width) - 1.0;
-    new_vec.y = ((2.0 * (given.y)) / height) - 1.0;
-    return new_vec;
+    return vec2<f32>(((2.0 * (given.x)) / width) - 1.0, ((2.0 * (given.y)) / height) - 1.0);
 }
 
 // Fragment shader
