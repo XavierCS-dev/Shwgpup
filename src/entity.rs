@@ -71,11 +71,9 @@ impl Entity {
     pub fn update(&mut self, x: u32, y: u32, rotation: f32, scale: f32) {
         self.rotation_deg = rotation;
         self.ent_scale = scale;
-        let x = x as f32;
-        let y = y as f32;
-        self.position.x = x;
-        self.position.y = y;
-        self.transformation = Transformation::new(rotation, scale);
+        self.position.x = x as f32;
+        self.position.y = y as f32;
+        self.transformation.update(rotation, scale);
     }
 
     // needed for sending to the shaders (rotation and position)
@@ -108,12 +106,7 @@ impl Entity {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
+                        load: wgpu::LoadOp::Load,
                         store: true,
                     },
                 })],

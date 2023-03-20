@@ -18,6 +18,15 @@ impl Transformation {
         Transformation { rotation, scale }
     }
 
+    pub fn update(&mut self, rotation: f32, scale: f32) {
+        let rotation = (rotation * PI) / 180.0;
+        self.rotation = [
+            [rotation.cos(), rotation.sin()],
+            [-(rotation.sin()), rotation.cos()],
+        ];
+        self.scale = [[scale, 0.0], [0.0, scale]];
+    }
+
     pub fn rotation(&self) -> [[f32; 2]; 2] {
         self.rotation
     }
