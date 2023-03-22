@@ -129,10 +129,10 @@ impl Entity {
     }
 
     pub fn position_x(&self) -> u32 {
-        return self.position.x as u32;
+        self.position.x as u32
     }
     pub fn position_y(&self) -> u32 {
-        return self.position.y as u32;
+        self.position.y as u32
     }
     pub fn rotation(&self) -> f32 {
         self.rotation_deg

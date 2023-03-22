@@ -7,6 +7,7 @@ mod state;
 mod texture;
 mod transformation;
 mod vertex;
+mod entity_group;
 
 use crate::run::run;
 

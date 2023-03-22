@@ -7,12 +7,14 @@ use cgmath::prelude::*;
 use wgpu::util::DeviceExt;
 use winit::event::WindowEvent;
 use winit::window::Window;
+use crate::entity_group::EntityGroup;
 
 pub struct State {
     pub surface: wgpu::Surface,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
     pub entities: Vec<Entity>,
+    pub entity_groups: Vec<EntityGroup>,
     pub window: Window,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -87,7 +89,7 @@ impl State {
         };
         surface.configure(&device, &config);
         let mut entities: Vec<Entity> = Vec::new();
-        for i in 0..100 {
+        for i in 0..0 {
             entities.push(Entity::new(
                 "assets/spoon.png",
                 i,
@@ -102,6 +104,14 @@ impl State {
             ));
         }
 
+        let mut entity_groups: Vec<EntityGroup> = Vec::new();
+        let mut group = EntityGroup::new("assets/spoon.png",&surface, &config, &adapter, &queue, &device);
+        for i in 0..1 {
+            group.add_instance(i, i, i, 0.0, 0.35, &device).unwrap();
+        }
+        entity_groups.push(group);
+
+
         // ...
         Self {
             window,
@@ -109,6 +119,7 @@ impl State {
             config,
             size,
             entities,
+            entity_groups,
             device,
             queue,
         }
@@ -143,6 +154,12 @@ impl State {
                 entity.scale(),
             );
         }
+        for group in &mut self.entity_groups {
+            for i in 0..group.count() {
+                let mut instance = group.get_instance(i as u32).unwrap();
+                instance.update(instance.position_x(), instance.position_y(), unsafe {rotation}, instance.scale());
+            }
+        }
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -176,6 +193,9 @@ impl State {
         }
         for entity in &self.entities {
             entity.render(&self.device, &mut encoder, &view).unwrap();
+        }
+        for group in &self.entity_groups {
+            group.render(&self.device, &mut encoder, &view).unwrap();
         }
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
