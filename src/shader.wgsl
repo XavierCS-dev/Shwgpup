@@ -22,14 +22,12 @@ struct Dimensions {
     height: f32,
 }
 
-// I think the trig functions are in radians...
+// Trig function in radians
 @vertex
 fn vs_main(
     model: VertexInput,
     entity: EntityInput,
-) -> VertexOutput {
-    // Currently this is for rotation only
-    // Angle calculation might actualy be somewhat off....
+) -> VertexOutput {.
     // TEMP, THESE WILL BE PASSED INTO SHADER SOMEHOW
     var screen_width = 562.0;
     var screen_height = 1021.0;
@@ -43,16 +41,12 @@ fn vs_main(
         entity.scale_2,
     );
     var orig_vec = vec2<f32>(model.position.x- entity.origin.x, model.position.y - entity.origin.y);
-    orig_vec = orig_vec * rot_mat * scale_mat;
-    orig_vec = orig_vec + entity.position;
-    orig_vec = orig_vec + entity.origin;
+    orig_vec = (orig_vec * rot_mat * scale_mat) + entity.position + entity.origin;
     orig_vec = normalise(orig_vec, screen_width, screen_height);
     out.tex_coords = model.tex_coords;
     out.clip_position = vec4<f32>(orig_vec, 1.0, 1.0);
     return out;
 }
-
-
 
 fn normalise(given: vec2<f32>, width: f32, height: f32) -> vec2<f32> {
     return vec2<f32>(((2.0 * (given.x)) / width) - 1.0, ((2.0 * (given.y)) / height) - 1.0);
