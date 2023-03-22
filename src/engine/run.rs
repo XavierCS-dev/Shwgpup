@@ -2,8 +2,8 @@ use cgmath::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wgpu::util::DeviceExt;
-use crate::state::State;
-use crate::process_window_event::window_event;
+use crate::engine::state::State;
+use crate::engine::process_window_event::window_event;
 
 use winit::{
     event::*,

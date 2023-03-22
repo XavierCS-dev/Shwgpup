@@ -2,7 +2,7 @@ use winit::event::WindowEvent;
 use winit::window::WindowId;
 use winit::event_loop::ControlFlow;
 use winit::event::*;
-use crate::state::State;
+use crate::engine::state::State;
 
 pub fn window_event(
     ref event: &WindowEvent,

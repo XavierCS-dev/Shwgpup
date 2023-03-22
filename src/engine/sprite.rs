@@ -1,5 +1,5 @@
-use crate::texture;
-use crate::vertex::Vertex;
+use crate::engine::texture;
+use crate::engine::vertex::Vertex;
 use cgmath::Vector2;
 use wgpu::util::DeviceExt;
 

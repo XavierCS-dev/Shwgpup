@@ -1,7 +1,7 @@
-use crate::render_init::RenderInit;
-use crate::sprite::Sprite;
-use crate::transformation::Transformation;
-use crate::vertex::Vertex;
+use crate::engine::render_init::RenderInit;
+use crate::engine::sprite::Sprite;
+use crate::engine::transformation::Transformation;
+use crate::engine::vertex::Vertex;
 use cgmath::prelude::*;
 use cgmath::Basis2;
 use cgmath::Vector2;

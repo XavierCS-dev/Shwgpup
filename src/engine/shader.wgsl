@@ -27,7 +27,7 @@ struct Dimensions {
 fn vs_main(
     model: VertexInput,
     entity: EntityInput,
-) -> VertexOutput {.
+) -> VertexOutput {
     // TEMP, THESE WILL BE PASSED INTO SHADER SOMEHOW
     var screen_width = 562.0;
     var screen_height = 1021.0;

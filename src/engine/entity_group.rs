@@ -1,7 +1,7 @@
 // Used for entities with the same texture that will be spawed many times.
-use crate::render_init::RenderInit;
-use crate::sprite::Sprite;
-use crate::transformation::Transformation;
+use crate::engine::render_init::RenderInit;
+use crate::engine::sprite::Sprite;
+use crate::engine::transformation::Transformation;
 use cgmath::Vector2;
 use std::collections::HashMap;
 use wgpu::util::DeviceExt;

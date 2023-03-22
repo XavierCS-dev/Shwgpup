@@ -1,13 +1,13 @@
-use crate::entity::Entity;
-use crate::entity::EntityRaw;
-use crate::sprite::Sprite;
-use crate::texture;
-use crate::vertex::Vertex;
+use crate::engine::entity::Entity;
+use crate::engine::entity::EntityRaw;
+use crate::engine::sprite::Sprite;
+use crate::engine::texture;
+use crate::engine::vertex::Vertex;
 use cgmath::prelude::*;
 use wgpu::util::DeviceExt;
 use winit::event::WindowEvent;
 use winit::window::Window;
-use crate::entity_group::EntityGroup;
+use crate::engine::entity_group::EntityGroup;
 
 pub struct State {
     pub surface: wgpu::Surface,

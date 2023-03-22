@@ -1,6 +1,6 @@
 use wgpu::{Surface, SurfaceConfiguration};
 
-use crate::{entity::EntityRaw, vertex::Vertex};
+use crate::engine::{entity::EntityRaw, vertex::Vertex};
 
 // Boiler plate initalisation.
 pub struct RenderInit {

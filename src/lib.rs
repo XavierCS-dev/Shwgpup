@@ -1,15 +1,7 @@
-mod entity;
-mod process_window_event;
-mod render_init;
-mod run;
-mod sprite;
-mod state;
-mod texture;
-mod transformation;
-mod vertex;
-mod entity_group;
-
-use crate::run::run;
+mod engine;
+mod actors;
+mod scenes;
+use crate::engine::run::run;
 
 struct Shmup {}
 
