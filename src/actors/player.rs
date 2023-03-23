@@ -37,32 +37,32 @@ impl Player {
         }
     }
     pub fn update(&mut self, time_elapsed: &Duration, screen_width: u32, screen_height: u32) {
-        let elapsed = (time_elapsed.as_millis() / 3);
+        let elapsed = time_elapsed.as_nanos() as f64;
         let mut x = self.entity.position_x() as i32;
         let mut y = self.entity.position_y() as i32;
         let screen_height = screen_height as i32;
         let screen_width = screen_width as i32;
         println!("elapsed: {}", elapsed);
         if self.left {
-            x = self.entity.position_x() as i32 - (elapsed) as i32;
+            x = self.entity.position_x() as i32 - ((0.090 * elapsed) / 100000.0) as i32;
             if x <= 0 {
                 x = 0;
             }
         }
         if self.right {
-            x = self.entity.position_x() as i32 + (elapsed) as i32;
+            x = self.entity.position_x() as i32 + ((0.090 * elapsed) / 100000.0) as i32;
             if x >= screen_width {
                 x = screen_width;
             }
         }
         if self.up {
-            y = self.entity.position_y() as i32 + (2 * elapsed) as i32;
+            y = self.entity.position_y() as i32 + ((0.125 * elapsed) / 100000.0) as i32;
             if y >= screen_height {
                 y = screen_height;
             }
         }
         if self.down {
-            y = self.entity.position_y() as i32 - (2 * elapsed) as i32;
+            y = self.entity.position_y() as i32 - ((0.125 * elapsed) / 100000.0) as i32;
             if y <= 0 {
                 y = 0;
             }
