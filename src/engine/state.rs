@@ -8,16 +8,29 @@ use wgpu::util::DeviceExt;
 use winit::event::WindowEvent;
 use winit::window::Window;
 use crate::engine::entity_group::EntityGroup;
+use crate::actors::player::Player;
+use crate::actors::enemy::Enemy;
+use crate::actors::bullet::Bullet;
+use crate::engine::draw::Draw;
+use winit::event::KeyboardInput;
+use winit::event::ElementState;
+use winit::event::VirtualKeyCode;
+use std::time::Instant;
+use std::time::Duration;
+
 
 pub struct State {
     pub surface: wgpu::Surface,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
-    pub entities: Vec<Entity>,
-    pub entity_groups: Vec<EntityGroup>,
+    pub player: Player,
+    pub enemies: Vec<Enemy>,
+    pub bullets: Vec<Bullet>,
     pub window: Window,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
+    pub instant: Instant,
+    pub duration: Duration,
 }
 
 static mut rotation: f32 = 0.0;
@@ -83,45 +96,31 @@ impl State {
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: surface_caps.present_modes[0],
+            present_mode: wgpu::PresentMode::AutoVsync,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
         };
         surface.configure(&device, &config);
-        let mut entities: Vec<Entity> = Vec::new();
-        for i in 0..0 {
-            entities.push(Entity::new(
-                "assets/spoon.png",
-                i,
-                i,
-                0.0,
-                0.35,
-                &surface,
-                &config,
-                &adapter,
-                &queue,
-                &device,
-            ));
-        }
-
-        let mut entity_groups: Vec<EntityGroup> = Vec::new();
-        let mut group = EntityGroup::new("assets/spoon.png",&surface, &config, &adapter, &queue, &device);
-        for i in 0..1 {
-            group.add_instance(i, i, i, 0.0, 0.35, &device).unwrap();
-        }
-        entity_groups.push(group);
+        let player = Player::new("assets/player.png", 200, 200, 0.0, 4.0, &surface, &config, &adapter, &queue, &device);
+        let enemies: Vec<Enemy> = Vec::new();
+        let bullets: Vec<Bullet> = Vec::new();
 
 
         // ...
+        let instant = Instant::now();
+        let duration = instant.elapsed();
         Self {
             window,
             surface,
             config,
             size,
-            entities,
-            entity_groups,
+            player,
+            enemies,
+            bullets,
             device,
             queue,
+            instant,
+            duration,
         }
     }
 
@@ -141,25 +140,45 @@ impl State {
     }
 
     pub fn input(&mut self, event: &WindowEvent) -> bool {
-        false
+        match event {
+            WindowEvent::KeyboardInput {
+                input: KeyboardInput {
+                    state,
+                    virtual_keycode: Some(keycode),
+                    ..
+                },
+                ..
+            } => {
+                let pressed = *state == ElementState::Pressed;
+                match keycode {
+                    VirtualKeyCode::Up => {
+                        self.player.up = pressed;
+                        true
+                    }
+                    VirtualKeyCode::Down => {
+                        self.player.down = pressed;
+                        true
+                    }
+                    VirtualKeyCode::Left => {
+                        self.player.left = pressed;
+                        true
+                    }
+                    VirtualKeyCode::Right => {
+                        self.player.right = pressed;
+                        true
+                    }
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
+
     }
 
     pub fn update(&mut self) {
-        unsafe { rotation += 0.2 };
-        for entity in &mut self.entities {
-            entity.update(
-                entity.position_x(),
-                entity.position_y(),
-                unsafe { rotation },
-                entity.scale(),
-            );
-        }
-        for group in &mut self.entity_groups {
-            for i in 0..group.count() {
-                let mut instance = group.get_instance(i as u32).unwrap();
-                instance.update(instance.position_x(), instance.position_y(), unsafe {rotation}, instance.scale());
-            }
-        }
+        self.duration = self.instant.elapsed();
+        self.instant = Instant::now();
+        self.player.update(&self.duration, self.window.inner_size().width, self.window.inner_size().height);
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -191,12 +210,7 @@ impl State {
                 depth_stencil_attachment: None,
             });
         }
-        for entity in &self.entities {
-            entity.render(&self.device, &mut encoder, &view).unwrap();
-        }
-        for group in &self.entity_groups {
-            group.render(&self.device, &mut encoder, &view).unwrap();
-        }
+        self.player.draw(&self.device, &mut encoder, &view).unwrap();
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 

@@ -25,8 +25,8 @@ pub struct EntityRaw {
 // a shared entity with support for instancing will be created in that case.
 // move position into transformation struct
 pub struct Entity {
-    sprite: Sprite,
-    position: Vector2<f32>,
+    pub sprite: Sprite,
+    pub position: Vector2<f32>,
     transformation: Transformation,
     render_pipeline: wgpu::RenderPipeline,
     rotation_deg: f32,

@@ -9,3 +9,4 @@ pub mod transformation;
 pub mod vertex;
 pub mod entity_group;
 pub mod collision_2d;
+pub mod draw;

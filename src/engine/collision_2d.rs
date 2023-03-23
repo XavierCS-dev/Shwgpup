@@ -34,10 +34,9 @@ impl Collision2D {
         let dist_ay = self.height / 2.0;
         let dist_bx = other.width / 2.0;
         let dist_by = other.height / 2.0;
-        (self.origin.x + dist_ax) > (other.origin.x - dist_bx) &&
-        (self.origin.x - dist_ax) < (other.origin.x + dist_bx) &&
-        (self.origin.y + dist_ay) > (other.origin.y - dist_by) &&
-        (self.origin.y - dist_ay) < (other.origin.y + dist_by)
+        (self.origin.x + dist_ax) > (other.origin.x - dist_bx)
+            && (self.origin.x - dist_ax) < (other.origin.x + dist_bx)
+            && (self.origin.y + dist_ay) > (other.origin.y - dist_by)
+            && (self.origin.y - dist_ay) < (other.origin.y + dist_by)
     }
-
 }
