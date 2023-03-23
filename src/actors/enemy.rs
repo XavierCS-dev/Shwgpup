@@ -44,7 +44,7 @@ impl Enemy {
         if self.entity.position.y <= 0.0 {
             self.alive = false;
         }
-        if self.entity.position.x >= screen_width || self.entity.position.x <= 0.0 {
+        if self.entity.position.x >= screen_width || self.entity.position.x <= 1.0 {
             self.direction *= -1.0;
         }
         let x = self.entity.position.x + ((self.velocity / 1.5) * time_elapsed.as_secs_f64()) as f32 * self.direction;
