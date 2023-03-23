@@ -65,9 +65,6 @@ impl Sprite {
     }
 
     fn create_vetices(width: u32, height: u32) -> (Vector2<f32>, [Vertex; 4]) {
-        // normalise pixel dimensions of images to maintain aspect ratio and fit on the screen
-        // which has range 0-1.
-        // look to scale normalised size in the future..for now I will stick with a fixed resolution.
         let width = width as f32;
         let height = height as f32;
         let h_width = width / 2.0;

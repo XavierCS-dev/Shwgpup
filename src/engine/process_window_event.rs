@@ -11,7 +11,6 @@ pub fn window_event(
     state: &mut State,
 ) {
     if !state.input(event) {
-        // UPDATED!
         match event {
             WindowEvent::CloseRequested
             | WindowEvent::KeyboardInput {

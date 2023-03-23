@@ -39,11 +39,6 @@ static mut rotation: f32 = 0.0;
 impl State {
     // Creating some of the wgpu types requires async code
     pub async fn new(window: Window) -> Self {
-        // locking the window size to prevent scaling issues with sprites
-        // can fix this if window is resized, but this is costly,
-        // game will be too large on high res screens, too small on low res
-        // screens, will need to work out a nice aspect ratio, then apply
-        // scaling where appropriate.
         window.set_inner_size(winit::dpi::PhysicalSize {
             width: 562,
             height: 1021,
