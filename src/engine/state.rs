@@ -17,7 +17,7 @@ use winit::event::ElementState;
 use winit::event::VirtualKeyCode;
 use std::time::Instant;
 use std::time::Duration;
-
+use rand::Rng;
 
 pub struct State {
     pub surface: wgpu::Surface,
@@ -193,6 +193,22 @@ impl State {
         for enemy in &mut self.enemies {
             enemy.update(&self.duration, inner_size.height as f32, inner_size.width as f32);
         }
+        if self.enemies.len() < 15 {
+            let mut rng = rand::thread_rng();
+            let x: u32 = rng.gen_range(0..self.window.inner_size().width);
+            let y: u32 = rng.gen_range(self.window.inner_size().height..self.window.inner_size().height * 2);
+            let velocity: f64 = rng.gen_range(300.0..700.0);
+            self.enemies.push(Enemy::new("assets/enemy.png", x, y, velocity, 0.0, 2.0, &self.surface, &self.config, &self.adapter, &self.queue, &self.device));
+        }
+        for enemy in &mut self.enemies {
+            for bullet in &mut self.bullets {
+                if enemy.get_collision().check_collision(bullet.get_collision()) {
+                    bullet.kill();
+                    enemy.kill();
+                    break;
+                }
+            }
+        }
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -213,9 +229,9 @@ impl State {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
                             a: 1.0,
                         }),
                         store: true,
@@ -226,6 +242,9 @@ impl State {
         }
         for bullet in &mut self.bullets {
             bullet.draw(&self.device, &mut encoder, &view).unwrap();
+        }
+        for enemy in &mut self.enemies {
+            enemy.draw(&self.device, &mut encoder, &view).unwrap();
         }
         self.player.draw(&self.device, &mut encoder, &view).unwrap();
         self.queue.submit(std::iter::once(encoder.finish()));

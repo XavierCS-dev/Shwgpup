@@ -14,12 +14,14 @@ pub struct Enemy {
     collision: Collision2D,
     alive: bool,
     direction: f32,
+    velocity: f64,
 }
 
 impl Enemy {
     pub fn new(filepath: &str,
         x: u32,
         y: u32,
+        velocity: f64,
         rotation: f32,
         scale: f32,
         surface: &Surface,
@@ -34,19 +36,21 @@ impl Enemy {
             collision,
             alive: true,
             direction: -1.0,
+            velocity,
         }
     }
 
     pub fn update(&mut self, time_elapsed: &Duration, screen_height: f32, screen_width: f32) {
-        if self.entity.position.y > screen_height {
+        if self.entity.position.y <= 0.0 {
             self.alive = false;
         }
         if self.entity.position.x >= screen_width || self.entity.position.x <= 0.0 {
             self.direction *= -1.0;
         }
-        let x = self.entity.position.x + (5.0 * time_elapsed.as_millis() as f32);
-        let y = self.entity.position.y + (5.0 * time_elapsed.as_millis() as f32);
+        let x = self.entity.position.x + ((self.velocity / 1.5) * time_elapsed.as_secs_f64()) as f32 * self.direction;
+        let y = self.entity.position.y - (self.velocity * time_elapsed.as_secs_f64()) as f32;
         self.entity.update(x as u32, y as u32, self.entity.rotation(), self.entity.scale());
+        self.collision.update(self.entity.position);
     }
 
     pub fn get_collision(&self) -> &Collision2D {

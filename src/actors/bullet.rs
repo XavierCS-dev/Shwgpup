@@ -41,6 +41,7 @@ impl Bullet {
         }
         let y = self.entity.position.y + (4000.0 * time_elapsed.as_secs_f64()) as f32;
         self.entity.update(self.entity.position_x(), y as u32, self.entity.rotation(), self.entity.scale());
+        self.collision.update(self.entity.position);
     }
 
     pub fn get_collision(&self) -> &Collision2D {
