@@ -69,6 +69,14 @@ impl Player {
         }
         self.entity.update(x as u32, y as u32, self.entity.rotation(), self.entity.scale());
     }
+
+    pub fn x(&self) -> u32 {
+        self.entity.position_x()
+    }
+
+    pub fn y(&self) -> u32 {
+        self.entity.position_y()
+    }
 }
 
 impl Draw for Player {

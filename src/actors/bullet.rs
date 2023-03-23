@@ -39,7 +39,7 @@ impl Bullet {
         if self.entity.position.y > screen_height {
             self.alive = false;
         }
-        let y = self.entity.position.y + (10.0 * time_elapsed.as_millis() as f32);
+        let y = self.entity.position.y + (4000.0 * time_elapsed.as_secs_f64()) as f32;
         self.entity.update(self.entity.position_x(), y as u32, self.entity.rotation(), self.entity.scale());
     }
 

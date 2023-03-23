@@ -31,6 +31,7 @@ pub struct State {
     pub queue: wgpu::Queue,
     pub instant: Instant,
     pub duration: Duration,
+    pub adapter: wgpu::Adapter,
 }
 
 static mut rotation: f32 = 0.0;
@@ -96,7 +97,7 @@ impl State {
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: wgpu::PresentMode::AutoNoVsync,
+            present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
         };
@@ -121,6 +122,7 @@ impl State {
             queue,
             instant,
             duration,
+            adapter,
         }
     }
 
@@ -179,6 +181,18 @@ impl State {
         self.duration = self.instant.elapsed();
         self.instant = Instant::now();
         self.player.update(&self.duration, self.window.inner_size().width, self.window.inner_size().height);
+        self.enemies.retain_mut(|x| x.alive());
+        self.bullets.retain_mut(|x| x.alive());
+        let inner_size = self.window.inner_size();
+        for bullet in &mut self.bullets {
+            bullet.update(&self.duration, inner_size.height as f32);
+        }
+        if self.bullets.len() < 1 {
+            self.bullets.push(Bullet::new("assets/bullet.png", self.player.x(), self.player.y(), 0.0, 2.0, &self.surface, &self.config, &self.adapter, &self.queue, &self.device));
+        }
+        for enemy in &mut self.enemies {
+            enemy.update(&self.duration, inner_size.height as f32, inner_size.width as f32);
+        }
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -209,6 +223,9 @@ impl State {
                 })],
                 depth_stencil_attachment: None,
             });
+        }
+        for bullet in &mut self.bullets {
+            bullet.draw(&self.device, &mut encoder, &view).unwrap();
         }
         self.player.draw(&self.device, &mut encoder, &view).unwrap();
         self.queue.submit(std::iter::once(encoder.finish()));
